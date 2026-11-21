@@ -1,0 +1,167 @@
+
+# ==========================================
+# PYTHON
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+.Python
+.python-version
+
+# ==========================================
+# VIRTUAL ENVIRONMENTS
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+.venv-*/
+venv-*/
+env-*/
+
+# ==========================================
+# PACKAGE MANAGEMENT
+# ==========================================
+pip-wheel-metadata/
+*.egg
+*.egg-info/
+.eggs/
+wheels/
+dist/
+build/
+site-packages/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==========================================
+# ENVIRONMENT VARIABLES / SECRETS
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# ==========================================
+# DATABASES
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# LOGS
+# ==========================================
+*.log
+logs/
+log/
+
+# ==========================================
+# TESTING / COVERAGE
+# ==========================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+nosetests.xml
+test-results/
+junit.xml
+
+# ==========================================
+# TYPE CHECKING / LINTING
+# ==========================================
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+.pylint.d/
+
+# ==========================================
+# IDE / EDITORS
+# ==========================================
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.spyderproject
+.spyproject/
+
+# ==========================================
+# JUPYTER NOTEBOOKS
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# OPERATING SYSTEM
+# ==========================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+
+# ==========================================
+# DOCUMENTATION / BUILD
+# ==========================================
+docs/_build/
+```
+
+### Atenção a dois arquivos importantes
+
+**1. `requirements.txt`**
+
+Não coloque no `.gitignore`!
+
+Esse arquivo deve ser versionado porque permite que outras pessoas instalem as mesmas dependências do projeto.
+
+**2. `.env.example`**
+
+Também deve ser versionado. Ele serve como modelo das variáveis de ambiente necessárias, sem conter senhas ou credenciais reais.
+
+### Estrutura recomendada do projeto
+
+```text
+TaskFlow_API/
+│
+├── .venv/
+├── app/
+├── tests/
+├── .env
+├── .env.example
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
+
+### Verificar o Git
+
+Depois de criar o arquivo, execute:
+
+```powershell
+git status
+```
+
+Se algum ambiente virtual já estiver sendo rastreado pelo Git, o `.gitignore` sozinho não deixará de rastreá-lo. Nesse caso, execute:
+
+```powershell
+git rm -r --cached .venv
+```
+
+Isso remove o rastreamento sem apagar os arquivos locais.
+
+**Minha recomendação:** mantenha esse `.gitignore` como padrão para seus próximos projetos Python, fazendo pequenos ajustes conforme as tecnologias utilizadas.
