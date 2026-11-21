@@ -1,5 +1,6 @@
 
 from fastapi import FastAPI, Query
+from pydantic import BaseModel
 
 # Creating our API application
 app = FastAPI(
@@ -7,6 +8,26 @@ app = FastAPI(
     description="A RESTful Task Management API built with Python",
     version="1.0.0"
 )
+
+tasks = []
+class TaskCreate(BaseModel):
+    title: str
+    description: str | None = None
+    completed: bool
+
+# Create a new task
+@app.post("/tasks", status_code=201)
+def create_task(task: TaskCreate):
+    new_task = {
+        "id": len(tasks) + 1,
+        "title": task.title,
+        "description": task.description,
+        "completed": task.completed
+    }
+
+    tasks.append(new_task)
+
+    return new_task
 
 
 # First endpoint
@@ -66,3 +87,4 @@ def get_subtask(task_id: int, subtask_id: int):
         "subtask_id": subtask_id,
         "message": f"Subtask {subtask_id} for task {task_id} requested"
     }
+
