@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel
 
 # Creating our API application
@@ -9,11 +9,24 @@ app = FastAPI(
     version="1.0.0"
 )
 
-tasks = []
+tasks = [
+    {"id": 1, "title": "Study Python", "description": "Learn the basics of Python", "completed": False},
+    {"id": 2, "title": "Study FastAPI", "completed": True},
+    {"id": 3, "title": "Study SQL", "completed": False}
+]
+
+# Task model
 class TaskCreate(BaseModel):
     title: str
     description: str | None = None
     completed: bool
+
+# Model for partial task updates
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    completed: bool | None = None
+
 
 # Create a new task
 @app.post("/tasks", status_code=201)
@@ -29,6 +42,59 @@ def create_task(task: TaskCreate):
 
     return new_task
 
+# Update PUT a task
+@app.put("/tasks/{task_id}")
+def update_task(task_id: int, updated_task: TaskCreate):
+
+    for task in tasks:
+        if task["id"] == task_id:
+
+            task["title"] = updated_task.title
+            task["description"] = updated_task.description
+            task["completed"] = updated_task.completed
+
+            return task
+
+    raise HTTPException(
+        status_code=404,
+        detail="Task not found"
+    )
+
+# Update PATCH a task
+@app.patch("/tasks/{task_id}")
+def partial_update_task(task_id: int, updated_task: TaskUpdate):
+
+    for task in tasks:
+        if task["id"] == task_id:
+
+            updated_data = updated_task.model_dump(exclude_unset=True)
+
+            for field, value in updated_data.items():
+                task[field] = value
+
+            return task
+
+    raise HTTPException(
+        status_code=404,
+        detail="Task not found"
+    )
+
+# Delete a task
+@app.delete("/tasks/{task_id}")
+def delete_task(task_id: int):
+
+    for task in tasks:
+        if task["id"] == task_id:
+            tasks.remove(task)
+
+            return {
+                "message": "Task deleted successfully"
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Task not found"
+    )
 
 # First endpoint
 @app.get("/")
@@ -46,24 +112,32 @@ def health_check():
         "status": "healthy"
     }
 
-# Path Parameters
-@app.get("/tasks/{task_id}")
-def get_task(task_id: int):
-    return {
-        "task_id": task_id,
-        "message": f"Task {task_id} requested"
-    }
-
-
-# Query Parameters
+# Get all tasks
 @app.get("/tasks")
 def list_tasks(completed: bool | None = None, limit: int = 10):
-    return {
-        "completed": completed,
-        "limit": limit
-    }
 
-# Task endpoints
+    filtered_tasks = tasks.copy()
+
+    if completed is not None:
+        filtered_tasks = [
+            task for task in filtered_tasks
+            if task["completed"] == completed
+        ]
+
+    return filtered_tasks[:limit]
+
+# Get a specific task
+@app.get("/tasks/{task_id}")
+def get_task(task_id: int):
+
+    for task in tasks:
+        if task["id"] == task_id:
+            return task
+
+    raise HTTPException(
+        status_code=404,
+        detail="Task not found"
+    )
 
 # Get subtasks from a specific task
 @app.get("/tasks/{task_id}/subtasks")
@@ -78,7 +152,6 @@ def get_subtasks(
         "limit": limit
     }
 
-
 # Get a specific subtask from a task
 @app.get("/tasks/{task_id}/subtasks/{subtask_id}")
 def get_subtask(task_id: int, subtask_id: int):
@@ -87,4 +160,6 @@ def get_subtask(task_id: int, subtask_id: int):
         "subtask_id": subtask_id,
         "message": f"Subtask {subtask_id} for task {task_id} requested"
     }
+
+
 
