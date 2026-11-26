@@ -217,17 +217,23 @@ def test_create_task_without_title(client):
 
     assert response.status_code == 422
 
-
-
 def test_create_task_without_completed(client):
-    task_data = {
-        "title": "Testing missing completed field",
-        "description": "Testing validation"
-    }
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI"
+        }
+    )
 
-    response = client.post("/tasks", json=task_data)
+    assert response.status_code == 201
 
-    assert response.status_code == 422
+    data = response.json()
+
+    assert data["title"] == "Study Python"
+    assert data["description"] == "Practice FastAPI"
+    assert data["completed"] is False
+
 
 
 def test_list_tasks_invalid_limit_zero(client):
@@ -301,3 +307,107 @@ def test_get_specific_subtask(client):
         "subtask_id": 25,
         "message": "Subtask 25 for task 10 requested"
     }
+
+
+def test_partial_update_completed_false(client):
+    # Create a task
+    create_response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI",
+            "completed": True
+        }
+    )
+
+    task_id = create_response.json()["id"]
+
+    # Update completed to False
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"completed": False}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["completed"] is False
+    assert response.json()["title"] == "Study Python"
+
+
+def test_partial_update_description_null(client):
+    # Create a task
+    create_response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI",
+            "completed": False
+        }
+    )
+
+    task_id = create_response.json()["id"]
+
+    # Update description to None
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"description": None}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["description"] is None
+    assert response.json()["title"] == "Study Python"
+
+def test_partial_update_empty_payload(client):
+    # Create a task
+    create_response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI",
+            "completed": False
+        }
+    )
+
+    task_id = create_response.json()["id"]
+
+    # Try to update with an empty payload
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "At least one field must be provided"
+
+def test_create_task_with_extra_field(client):
+    response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI",
+            "completed": False,
+            "admin": True
+        }
+    )
+
+    assert response.status_code == 422
+    assert "extra_forbidden" in str(response.json())
+
+def test_partial_update_with_extra_field(client):
+    create_response = client.post(
+        "/tasks",
+        json={
+            "title": "Study Python",
+            "description": "Practice FastAPI",
+            "completed": False
+        }
+    )
+
+    task_id = create_response.json()["id"]
+
+    response = client.patch(
+        f"/tasks/{task_id}",
+        json={"completedd": True}
+    )
+
+    assert response.status_code == 422
+    assert "extra_forbidden" in str(response.json())

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Task
 
-from pydantic import BaseModel
+from app.schemas import TaskCreate, TaskUpdate, TaskResponse
 
 # Creating our API application
 app = FastAPI(
@@ -14,21 +14,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Task model
-class TaskCreate(BaseModel):
-    title: str
-    description: str | None = None
-    completed: bool
-
-# Model for partial task updates
-class TaskUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    completed: bool | None = None
-
-
 # Create a new task 2.0
-@app.post("/tasks", status_code=201)
+@app.post("/tasks", status_code=201, response_model=TaskResponse)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     new_task = Task(
         title=task.title,
@@ -43,7 +30,7 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     return new_task
 
 # Update PUT a task
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
     updated_task: TaskCreate,
@@ -79,7 +66,7 @@ def update_task(
     )
 
 # Update PATCH a task
-@app.patch("/tasks/{task_id}")
+@app.patch("/tasks/{task_id}", response_model=TaskResponse)
 def partial_update_task(
     task_id: int,
     updated_task: TaskUpdate,
@@ -91,6 +78,12 @@ def partial_update_task(
     if task:
 
         updated_data = updated_task.model_dump(exclude_unset=True)
+
+        if not updated_data:
+            raise HTTPException(
+                status_code=422,
+                detail="At least one field must be provided"
+            )
 
         for field, value in updated_data.items():
             setattr(task, field, value)
@@ -138,7 +131,7 @@ def health_check():
     }
 
 # Get all tasks
-@app.get("/tasks")
+@app.get("/tasks", response_model=list[TaskResponse])
 def list_tasks(
     completed: bool | None = None,
     limit: int = Query(default=10, gt=0, le=100),
@@ -156,7 +149,7 @@ def list_tasks(
     return tasks
 
 # Get a specific task
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(task_id: int, db: Session = Depends(get_db)):
 
     task = db.query(Task).filter(Task.id == task_id).first()

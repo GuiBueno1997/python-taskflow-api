@@ -1,5 +1,7 @@
 # TaskFlow API
 
+![CI](https://github.com/GuiBueno1997/python-taskflow-api/actions/workflows/ci.yml/badge.svg)
+
 A RESTful Task Management API built with Python, FastAPI, SQLAlchemy, and PostgreSQL.
 
 TaskFlow API is a backend portfolio project focused on learning and implementing RESTful API development, database integration, and CRUD operations using Python.
