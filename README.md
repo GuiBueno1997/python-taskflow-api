@@ -1,4 +1,3 @@
-
 # TaskFlow API
 
 A RESTful Task Management API built with Python, FastAPI, SQLAlchemy, and PostgreSQL.
@@ -223,15 +222,49 @@ python -m scripts.delete_task
 
 These scripts are intended for database learning and experimentation.
 
+## Testing
+
+The project includes automated tests using Pytest and FastAPI TestClient.
+
+Tests run against an isolated in-memory SQLite database, ensuring that the development PostgreSQL database is not modified during test execution.
+
+### Run automated tests
+
+```bash
+python -m pytest -v
+```
+
+### Run tests with coverage
+
+```bash
+python -m pytest --cov=app --cov-report=term-missing
+```
+
+### Test coverage
+
+The test suite currently includes 19 automated tests covering:
+
+- API health checks and root endpoint
+- Task creation, retrieval, updating and deletion
+- Partial task updates
+- Task filtering and result limits
+- HTTP error handling (404 and 422)
+- Subtask demonstration endpoints
+
+Current coverage:
+
+- 100% coverage in `app/main.py`
+- 100% coverage in `app/models.py`
+- 92% overall application coverage
+
 ## Current Limitations
 
 - Subtask endpoints currently return demonstration responses and are not connected to persistent database models.
-- Automated pytest coverage has not yet been implemented.
+- Automated tests currently use an in-memory SQLite database; integration tests against PostgreSQL are not yet configured.
 - Database schema migrations are not yet configured.
 
 ## Future Improvements
 
-- Implement automated tests with Pytest.
 - Add Alembic for database migrations.
 - Implement persistent subtasks and relationships.
 - Add authentication and authorization.
