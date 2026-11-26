@@ -1,5 +1,10 @@
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models import Task
+
 from pydantic import BaseModel
 
 # Creating our API application
@@ -8,12 +13,6 @@ app = FastAPI(
     description="A RESTful Task Management API built with Python",
     version="1.0.0"
 )
-
-tasks = [
-    {"id": 1, "title": "Study Python", "description": "Learn the basics of Python", "completed": False},
-    {"id": 2, "title": "Study FastAPI", "completed": True},
-    {"id": 3, "title": "Study SQL", "completed": False}
-]
 
 # Task model
 class TaskCreate(BaseModel):
@@ -28,33 +27,52 @@ class TaskUpdate(BaseModel):
     completed: bool | None = None
 
 
-# Create a new task
+# Create a new task 2.0
 @app.post("/tasks", status_code=201)
-def create_task(task: TaskCreate):
-    new_task = {
-        "id": len(tasks) + 1,
-        "title": task.title,
-        "description": task.description,
-        "completed": task.completed
-    }
+def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+    new_task = Task(
+        title=task.title,
+        description=task.description,
+        completed=task.completed
+    )
 
-    tasks.append(new_task)
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
 
     return new_task
 
 # Update PUT a task
 @app.put("/tasks/{task_id}")
-def update_task(task_id: int, updated_task: TaskCreate):
+def update_task(
+    task_id: int,
+    updated_task: TaskCreate,
+    db: Session = Depends(get_db)
+):
+    # 1. Buscar a tarefa pelo ID
 
-    for task in tasks:
-        if task["id"] == task_id:
+    task = db.query(Task).filter(Task.id == task_id).first()
+    # 2. Verificar se ela existe
+    if task:
+        # 3. Atualizar title, description e completed
 
-            task["title"] = updated_task.title
-            task["description"] = updated_task.description
-            task["completed"] = updated_task.completed
+        task.title = updated_task.title
+        task.description = updated_task.description
+        task.completed = updated_task.completed
 
-            return task
+        # 4. Salvar as alterações no banco
 
+        db.commit()
+
+        # 5. Atualizar os dados do objeto
+
+        db.refresh(task)
+
+        # 6. Retornar a tarefa
+
+        return task
+
+    # 7. Se não encontrar, retornar HTTP 404
     raise HTTPException(
         status_code=404,
         detail="Task not found"
@@ -62,17 +80,25 @@ def update_task(task_id: int, updated_task: TaskCreate):
 
 # Update PATCH a task
 @app.patch("/tasks/{task_id}")
-def partial_update_task(task_id: int, updated_task: TaskUpdate):
+def partial_update_task(
+    task_id: int,
+    updated_task: TaskUpdate,
+    db: Session = Depends(get_db)
+):
 
-    for task in tasks:
-        if task["id"] == task_id:
+    task = db.query(Task).filter(Task.id == task_id).first()
 
-            updated_data = updated_task.model_dump(exclude_unset=True)
+    if task:
 
-            for field, value in updated_data.items():
-                task[field] = value
+        updated_data = updated_task.model_dump(exclude_unset=True)
 
-            return task
+        for field, value in updated_data.items():
+            setattr(task, field, value)
+
+        db.commit()
+        db.refresh(task)
+
+        return task
 
     raise HTTPException(
         status_code=404,
@@ -81,15 +107,14 @@ def partial_update_task(task_id: int, updated_task: TaskUpdate):
 
 # Delete a task
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
+def delete_task(task_id: int, db: Session = Depends(get_db)):
 
-    for task in tasks:
-        if task["id"] == task_id:
-            tasks.remove(task)
+    task = db.query(Task).filter(Task.id == task_id).first()
 
-            return {
-                "message": "Task deleted successfully"
-            }
+    if task:
+        db.delete(task)
+        db.commit()
+        return {"message": "Task deleted successfully!"}
 
     raise HTTPException(
         status_code=404,
@@ -114,25 +139,30 @@ def health_check():
 
 # Get all tasks
 @app.get("/tasks")
-def list_tasks(completed: bool | None = None, limit: int = 10):
+def list_tasks(
+    completed: bool | None = None,
+    limit: int = Query(default=10, gt=0, le=100),
+    db: Session = Depends(get_db)):
 
-    filtered_tasks = tasks.copy()
+    query = db.query(Task)
 
     if completed is not None:
-        filtered_tasks = [
-            task for task in filtered_tasks
-            if task["completed"] == completed
-        ]
+        query = query.filter(Task.completed == completed)
 
-    return filtered_tasks[:limit]
+    query = query.limit(limit)
+
+    tasks = query.all()
+
+    return tasks
 
 # Get a specific task
 @app.get("/tasks/{task_id}")
-def get_task(task_id: int):
+def get_task(task_id: int, db: Session = Depends(get_db)):
 
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
+    task = db.query(Task).filter(Task.id == task_id).first()
+
+    if task:
+        return task
 
     raise HTTPException(
         status_code=404,
@@ -143,8 +173,8 @@ def get_task(task_id: int):
 @app.get("/tasks/{task_id}/subtasks")
 def get_subtasks(
     task_id: int, 
-    completed: bool | None = None, 
-    limit: int = Query(default=10, gt=0, le=100)
+    completed: bool | None = None,
+    limit: int = Query(default=10, gt=0, le=100),
 ):
     return {
         "task_id": task_id,

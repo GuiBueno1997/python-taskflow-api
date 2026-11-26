@@ -1,0 +1,39 @@
+$kind: http-request
+url: "{{base_url}}/tasks/{{task_id}}"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \    \"title\": \"Task updated with Postman\",\r
+
+    \    \"description\": \"Test by Postman PUT\",\r
+
+    \    \"completed\": true\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 200\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Task was updated\", function () {\r
+
+      \    const body = pm.response.json();\r
+
+      \r
+
+      \    pm.expect(body).to.have.property(\"id\");\r
+
+      \    pm.expect(body.title).to.eql(\"Task updated with Postman\");\r
+
+      \    pm.expect(body.completed).to.eql(true);\r
+
+      });"
+    language: text/javascript
+order: 3000

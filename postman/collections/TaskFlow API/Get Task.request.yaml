@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{base_url}}/tasks/{{task_id}}"
+method: GET
+order: 1311

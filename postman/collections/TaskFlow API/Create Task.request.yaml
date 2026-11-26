@@ -1,0 +1,47 @@
+$kind: http-request
+url: "{{base_url}}/tasks"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"title\": \"Testing Postman\",\r
+
+    \    \"description\": \"Testing automated API tests\",\r
+
+    \    \"completed\": false\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Status code is 201\", function () {\r
+
+      \    pm.response.to.have.status(201);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Task has an ID\", function () {\r
+
+      \    const body = pm.response.json();\r
+
+      \    pm.expect(body.id).to.exist;\r
+
+      });\r
+
+      pm.test(\"Task title is correct\", function () {\r
+
+      \    const body = pm.response.json();\r
+
+      \    pm.expect(body.title).to.eql(\"Testing Postman\");\r
+
+      });\r
+
+      const body = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"task_id\", body.id);"
+    language: text/javascript
+order: 1000

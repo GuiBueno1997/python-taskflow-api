@@ -1,0 +1,7 @@
+name: TaskFlow Local
+values:
+  - key: base_url
+    value: ''
+  - key: task_id
+    value: ''
+color: 240

@@ -1,0 +1,7 @@
+$kind: http-request
+url: "{{base_url}}/tasks/{{task_id}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r\n    \"completed\": false\r\n}"
+order: 4000
