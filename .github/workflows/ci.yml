@@ -12,6 +12,9 @@ jobs:
     name: Run automated tests
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: sqlite://
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
